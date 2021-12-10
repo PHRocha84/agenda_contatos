@@ -1,4 +1,3 @@
-
 import 'package:agenda_contatos/ui/contact_page.dart';
 import 'dart:io';
 import 'package:agenda_contatos/helpers/contact_helper.dart';
@@ -11,7 +10,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-
   ContactHelper helper = ContactHelper();
 
   List<Contact> contacts = List();
@@ -19,12 +17,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-
-    helper.getAllContacts().then((list) {
-      setState(() {
-        contacts = list;
-      });
-    });
+    _getAllContacts();
   }
 
   @override
@@ -37,7 +30,9 @@ class _HomePageState extends State<HomePage> {
       ),
       backgroundColor: Colors.white,
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          _showContactPage();
+        },
         child: Icon(Icons.add),
         backgroundColor: Colors.red,
       ),
@@ -46,8 +41,7 @@ class _HomePageState extends State<HomePage> {
           itemCount: contacts.length,
           itemBuilder: (context, index) {
             return _contactCard(context, index);
-          }
-      ),
+          }),
     );
   }
 
@@ -56,49 +50,70 @@ class _HomePageState extends State<HomePage> {
         child: Card(
             child: Padding(
                 padding: EdgeInsets.all(10.0),
-                child: Row(
-                    children: <Widget>[
-                      Container(
-                        width: 80.0,
-                        height: 80.0,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          image: DecorationImage(
-                              image: contacts[index].img != null ?
-                              FileImage(File(contacts[index].img)) :
-                              AssetImage("images/person.png")
-                          ),
+                child: Row(children: <Widget>[
+                  Container(
+                    width: 80.0,
+                    height: 80.0,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      image: DecorationImage(
+                          image: contacts[index].img != null
+                              ? FileImage(File(contacts[index].img))
+                              : AssetImage("images/person.png")),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(left: 10.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          contacts[index].name ?? "",
+                          style: TextStyle(
+                              fontSize: 22.0, fontWeight: FontWeight.bold),
                         ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(left: 10.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(contacts[index].name ??"",
-                              style: TextStyle(fontSize: 22.0,
-                                  fontWeight:FontWeight.bold),
-                            ),
-                            Text(contacts[index].email ??"",
-                              style: TextStyle(fontSize: 18.0),
-                            ),
-                            Text(contacts[index].phone ??"",
-                              style: TextStyle(fontSize: 18.0),
-                            )
-                          ],
+                        Text(
+                          contacts[index].email ?? "",
+                          style: TextStyle(fontSize: 18.0),
                         ),
-                      )
-                    ]
-                )
-            )
-        )
+                        Text(
+                          contacts[index].phone ?? "",
+                          style: TextStyle(fontSize: 18.0),
+                        )
+                      ],
+                    ),
+                  )
+                ],
+                ),
+            ),
+        ),
+      onTap: (){
+          _showContactPage(contact: contacts[index]);
+      },
     );
+  }
+
+  void _showContactPage({Contact contact}) async {
+     final recContact = await Navigator.push(context,
+        MaterialPageRoute(builder: (context) => ContactPage(contact: contact,))
+    );
+    if(recContact != null){
+      if(contact != null) {
+        await helper.updateContact(recContact);
+      } else {
+        await helper.saveContact(recContact);
+      }
+      _getAllContacts();
+    }
+  }
+  void _getAllContacts(){
+    helper.getAllContacts().then((list) {
+      setState(() {
+        contacts = list;
+      });
+    });
   }
 }
 
-void _showContactPage({Contact contact}){
-    BuildContext context;
-    Navigator.push(context,
-  MaterialPageRoute(builder: (context) => ContactPage(contact: contact,))
-  );
-}
+
+
